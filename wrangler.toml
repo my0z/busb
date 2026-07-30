@@ -1,0 +1,21 @@
+name = "geminai-worker"
+main = "geminai-worker.js"
+compatibility_date = "2024-09-23"
+
+# ---------------------------------------------------------------
+# BLOG_ID / BLOG_ID_NEWSVIEWT / BLOG_ID_ZEROWORKER / BLOG_ID_MILITARY / BLOG_ID_LIFE
+# 는 이미 Cloudflare에 secret으로 저장되어 있으므로 wrangler.toml에는 넣지 않음.
+# (여기 [vars]에 같은 이름을 넣으면 배포 시 secret 값을 덮어씀)
+# ---------------------------------------------------------------
+# pexel-image 워커 Service Binding (선택)
+# workers.dev 도메인 간 fetch 제한(1042)을 우회하려면 필요.
+# 실제 pexel-image 워커 이름으로 service 값을 교체할 것.
+# ---------------------------------------------------------------
+[[services]]
+binding = "PEXEL_IMAGE"
+service = "pexel-image"
+
+# ---------------------------------------------------------------
+# GEMINI_API_KEY / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN
+# 도 이미 secret으로 등록되어 있으므로 wrangler.toml에는 넣지 않음.
+# ---------------------------------------------------------------
