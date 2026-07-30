@@ -17,6 +17,16 @@
 const WORKER_IMG_URL = "https://pexel-image.usbkr.workers.dev"; // 이미지/펙셀 검색 중계 (브라우저에서 직접 호출할 때만 사용)
 const PLAY_WORKER = "https://play.scsi.kr"; // 동영상 스트리밍 도메인
 
+// 블로그 select 옵션 / 최신글 대시보드 라벨 / blogId 매핑에서 공용으로 쓰는 단일 목록.
+// 여기 한 곳만 수정하면 select, 대시보드, blogIdMap, 프롬프트 컨셉이 모두 동기화된다.
+const BLOG_LIST = [
+  ["petpy", "PetPy"],
+  ["newsviewt", "newsviewt"],
+  ["zeroworker", "ZeroWorker"],
+  ["military", "Military"],
+  ["life", "Life"],
+];
+
 // ---------------------------------------------------------------
 // 공통 유틸
 // ---------------------------------------------------------------
@@ -118,14 +128,22 @@ async function callImageWorker(env, path, options = {}, timeoutMs = 15000) {
 // ---------------------------------------------------------------
 
 // selectedBlog 키 -> 실제 Blogger blogId. handleUpload와 최신글 조회 양쪽에서 공용으로 사용.
+// BLOG_LIST 순서를 그대로 따르므로 블로그를 추가/삭제할 땐 BLOG_LIST와 env 시크릿 이름만 맞추면 된다.
+const BLOG_ID_ENV_KEYS = {
+  petpy: "BLOG_ID",
+  newsviewt: "BLOG_ID_NEWSVIEWT",
+  zeroworker: "BLOG_ID_ZEROWORKER",
+  military: "BLOG_ID_MILITARY",
+  life: "BLOG_ID_LIFE",
+};
+
 function getBlogIdMap(env) {
-  return {
-    petpy: env.BLOG_ID,
-    newsviewt: env.BLOG_ID_NEWSVIEWT || env.BLOG_ID,
-    zeroworker: env.BLOG_ID_ZEROWORKER || env.BLOG_ID,
-    military: env.BLOG_ID_MILITARY || env.BLOG_ID,
-    life: env.BLOG_ID_LIFE || env.BLOG_ID,
-  };
+  const map = {};
+  for (const [key] of BLOG_LIST) {
+    const envKey = BLOG_ID_ENV_KEYS[key];
+    map[key] = (envKey && env[envKey]) || env.BLOG_ID;
+  }
+  return map;
 }
 
 async function getBloggerAccessToken(env) {
@@ -482,7 +500,7 @@ async function handleGenerate(form, env) {
 
     const blogConcepts = {
       petpy: "인간외 블로그",
-      newviewt: "새로운 문물",
+      newsviewt: "새로운 문물",
       zeroworker: "생산성/자동화/직장인 업무 효율 블로그",
       military: "군사/무기/밀리터리 역사 전문 블로그",
       life: "일상/생활 정보/라이프스타일 블로그",
@@ -780,15 +798,7 @@ async function handleUpload(form, env) {
 // ---------------------------------------------------------------
 
 function renderLatestPostsDashboard(latestPostsByBlog) {
-  const blogLabels = [
-    ["petpy", "PetPy"],
-    ["newsviewt", "newsviewt"],
-    ["zeroworker", "ZeroWorker"],
-    ["military", "Military"],
-    ["life", "Life"],
-  ];
-
-  const cards = blogLabels.map(([key, label]) => {
+  const cards = BLOG_LIST.map(([key, label]) => {
     const posts = latestPostsByBlog[key] || [];
     const items = posts.length
       ? posts.map((p) =>
@@ -811,13 +821,7 @@ function renderLatestPostsDashboard(latestPostsByBlog) {
 }
 
 function renderPage({ csrfToken, statusMsg = "", resultText = "", finalHtmlContent = "", topic = "", selectedBlog = "petpy", labels = [], latestPostsByBlog = {} }) {
-  const blogOptions = [
-    ["petpy", "PetPy"],
-    ["newsviewt", "newsviewt"],
-    ["zeroworker", "ZeroWorker"],
-    ["military", "Military"],
-    ["life", "Life"],
-  ]
+  const blogOptions = BLOG_LIST
     .map(([val, label]) => `<option value="${val}" ${selectedBlog === val ? "selected" : ""}>${label}</option>`)
     .join("\n");
 
